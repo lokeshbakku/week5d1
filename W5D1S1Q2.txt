@@ -1,0 +1,66 @@
+W5D1S1Q2
+
+import form module in app.module.ts
+
+app.comp.html
+<app-user></app-user>
+
+html
+
+<h1>User Management System</h1>
+<form #userForm="ngForm" (ngSubmit)="addUser()">
+    <div class="form-group">
+        <input type="text" name="name" id="name" placeholder="name" [(ngModel)]="newName"/>
+    </div>
+    <div class="form-group">
+        <input type="email" name="email" id="email" placeholder="email" [(ngModel)]="newEmail"/>
+    </div>
+    <button type="submit">Add User</button>
+</form>
+<ul>
+    <li *ngFor="let user of users$ | async">
+        <h2>{{user?.name}}</h2>
+        <p>{{user?.email}}</p>
+    </li>
+</ul>
+
+ts
+import { Component, OnInit } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+
+interface User{
+  id:number,
+  name:string,
+  email:string
+}
+@Component({
+  selector: 'app-user',
+  templateUrl: './user.component.html',
+  styleUrls: ['./user.component.css']
+})
+export class UserComponent implements OnInit {
+
+  users: User[]=[]
+  private usersSubject = new BehaviorSubject<User[]>([])
+  users$ : Observable<User[]> = this.usersSubject.asObservable()
+  newName:string=''
+  newEmail:string=''
+  constructor() { }
+
+  ngOnInit(): void {
+    this.usersSubject.next(this.users)
+  }
+  addUser():void{
+    if(!this.newEmail || !this.newName) return;
+    const user:User = {
+      id:this.users.length+1,
+      name:this.newName,
+      email:this.newEmail
+    }
+    this.users = [...this.users,user];
+    this.usersSubject.next(this.users);
+    this.newEmail = '';
+    this.newName = '';
+  }
+
+}

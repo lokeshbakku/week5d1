@@ -1,0 +1,118 @@
+W5D1S2Q2
+
+import formModule in app.html
+
+add-vehicle.html
+<h2>Add Vehicle</h2>
+<form (ngSubmit)="addVehicle()">
+    <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" [(ngModel)]="name" required>
+        <p *ngIf="!name">Name is required</p>
+    </div>
+    <div>
+        <label for="type">Name:</label>
+        <input type="text" id="type" name="type" [(ngModel)]="type" required>
+        <p *ngIf="!type">Type is required</p>
+    </div>
+    <div>
+        <label for="brand">Name:</label>
+        <input type="text" id="brand" name="brand" [(ngModel)]="brand" required>
+        <p *ngIf="!brand">Brand is required</p>
+    </div>
+    <button type="submit">Add Vehicle</button>
+</form>
+
+add-vehicle.ts
+import { Component, OnInit } from '@angular/core';
+import { VehicleService } from '../services/vehicle.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-add-vehicle',
+  templateUrl: './add-vehicle.component.html',
+  styleUrls: ['./add-vehicle.component.css']
+})
+export class AddVehicleComponent implements OnInit {
+
+  name:string =''
+  type:string = ''
+  brand:string = ''
+  constructor(private vehicleService:VehicleService, private router:Router) { }
+  addVehicle(){
+    if(this.name && this.type && this.brand){
+      const newVehicle={
+        name:this.name,
+        type:this.type,
+        brand:this.brand
+      };
+      this.vehicleService.addVehicle(newVehicle)
+      this.router.navigate(['/vehicles'])
+    }
+  }
+
+  ngOnInit(): void {
+  }
+
+}
+
+vehicle-list.html
+<h2>Vehicle List</h2>
+
+<div *ngIf="vehicles.length>0;else noVehicles">
+    <ul>
+        <li *ngFor="let vehicle of vehicles; let i = index">
+            {{vehicle.name}} - {{vehicle.type}} - {{vehicle.brand}}
+            <button (click)="deleteVehicle(i)">Delete</button>
+        </li>
+    </ul>
+</div>
+<ng-template #noVehicles>
+    <p>No vehicle is added.</p>
+</ng-template>
+
+vehicle-list.ts
+import { Component, OnInit } from '@angular/core';
+import { VehicleService } from '../services/vehicle.service';
+
+@Component({
+  selector: 'app-vehicle-list',
+  templateUrl: './vehicle-list.component.html',
+  styleUrls: ['./vehicle-list.component.css']
+})
+export class VehicleListComponent implements OnInit {
+
+  vehicles:any[]=[]
+  constructor(private vehicleService:VehicleService) { }
+
+  ngOnInit(): void {
+    this.vehicles = this.vehicleService.getVehicles()
+  }
+  deleteVehicle(index:number){
+    this.vehicleService.deleteVehicle(index)
+  }
+
+}
+
+vehicle.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class VehicleService {
+
+  vehicles:any[]=[]
+  constructor() { }
+
+  getVehicles(){
+    return this.vehicles;
+  }
+  addVehicle(vehicle:any){
+    this.vehicles.push(vehicle)
+  }
+  deleteVehicle(index:number){
+    this.vehicles.splice(index, 1)
+  }
+}
+

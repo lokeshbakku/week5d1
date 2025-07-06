@@ -1,0 +1,174 @@
+W5D1S3Q2
+
+1 bus list html 
+<h2>Bus List</h2>
+    <ul>
+        <li *ngFor="let bus of buses">
+            {{bus.name}} {{bus.route}} {{bus.capacity}}
+            <button (click)="deleteBus()">Delete</button>
+            <button (click)="editBus()">Edit</button>
+        </li>
+    </ul>
+<h2>Add Bus</h2>
+<form (ngSubmit)="addBus()">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" [(ngModel)]="newBus.name" />
+
+    <label for="route">Route:</label>
+    <input type="text" id="route" name="route" [(ngModel)]="newBus.route"/>
+
+    <label for="capacity">Capacity:</label>
+    <input type="text" id="capacity" name="capacity" [(ngModel)]="newBus.capacity"/>
+
+    <button type="submit">Add Bus</button>
+    
+</form>
+<h2>Edit Bus</h2>
+<form *ngIf="selectedBus" (ngSubmit)="updateBus()">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="editname" [(ngModel)]="newBus.name" />
+
+    <label for="route">Route:</label>
+    <input type="text" id="route" name="editroute" [(ngModel)]="newBus.route"/>
+
+    <label for="capacity">Capacity:</label>
+    <input type="text" id="capacity" name="editcapacity" [(ngModel)]="newBus.capacity"/>
+
+</form>
+<button type="submit">Update Bus</button>
+---------------------------------------------------------------------------
+2 bus list ts 
+import { Component, OnInit } from '@angular/core';
+import { BusService } from '../services/bus.service';
+import { Bus } from '../model/bus.model';
+
+@Component({
+  selector: 'app-bus-list',
+  templateUrl: './bus-list.component.html',
+  styleUrls: ['./bus-list.component.css']
+})
+export class BusListComponent implements OnInit {
+  buses: Bus[] = [];
+  newBus:Bus = {
+    id: 0,
+    name: '',
+    route: '',
+    capacity: 0
+  }
+  selectedBus: Bus | null=null;
+ 
+  constructor(private busService: BusService) { }
+
+  ngOnInit(): void {
+    this.loadBuses();
+  }
+  loadBuses(){
+    this.busService.getBuses().subscribe((data)=>{
+      this.buses=data;
+    })
+  }
+  deleteBus(id:number){
+    this.busService.deleteBus(id).subscribe(()=>{
+      this.loadBuses();
+    })
+  }
+  editBus(bus:Bus){
+    this.selectedBus= {...bus};
+
+  }
+  updateBus(){
+    if(this.selectedBus){
+      this.busService.updateBus(this.selectedBus).subscribe(()=>{
+        this.selectedBus=null;
+        this.loadBuses();
+      })
+    }
+  }
+  addBus(){
+    this.busService.addBus(this.newBus).subscribe(()=>{
+      this.newBus={id:0 , name:'' ,route:'' ,capacity:0};
+      this.loadBuses();
+    })
+
+  }
+}
+
+--------------------------------------------------------------------------------------
+
+3. bus model.ts
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+export interface Bus{
+  id:number;
+  name:string;
+  route:string;
+  capacity:number;
+}
+
+@NgModule({
+  declarations: [],
+  imports: [
+    CommonModule
+  ]
+})
+export class BusModule { }
+------------------------------------------------------------------------------------------------------
+4.bus service ts 
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Bus } from '../model/bus.model';
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class BusService {
+  private apiUrl = "https://ide-bdfcfecfacdcfd330054568bdfbccbbbdcebone.project.examly.io/proxy/3001/buses";
+
+  constructor(private http: HttpClient ) { 
+
+  }
+  getBuses():Observable<Bus[]>{
+    return this.http.get<Bus[]>(this.apiUrl);
+  }
+  addBus(bus:Bus):Observable<Bus>{
+    return this.http.post<Bus>(this.apiUrl,bus);
+  }
+  updateBus(bus:Bus):Observable<Bus>{
+    return this.http.put<Bus>(`${this.apiUrl}/${bus.id}`,bus);
+  }
+  deleteBus(busId:number):Observable<void>{
+    return this.http.delete<void>(`${this.apiUrl}/${busId}`);
+  }
+  
+}
+------------------------------------------------------------------------------------------------------------------
+5 app component html 
+<app-bus-list></app-bus-list>
+----------------------------------------------------------------------
+6 app component ts 
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+import { FormsModule,ReactiveFormsModule } from '@angular/forms';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { BusListComponent } from './bus-list/bus-list.component';
+import {HttpClientModule} from '@angular/common/http';
+@NgModule({
+  declarations: [
+    AppComponent,
+    BusListComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }

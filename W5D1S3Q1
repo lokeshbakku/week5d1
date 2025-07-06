@@ -1,0 +1,162 @@
+W5D1S3Q1
+
+1 food service.ts 
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Food } from '../model/food.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FoodService {
+  apiUrl:string = "https://ide-bdfcfecfacdcfd329950743ccebdebcabeedbone.project.examly.io/proxy/3001/foods"; 
+  constructor(private http: HttpClient) { }
+
+  getFoods():Observable<Food[]>{
+    return this.http.get<Food[]>(this.apiUrl);
+  }
+  addFood(food:Food):Observable<Food>{
+    return this.http.post<Food>(this.apiUrl,food);
+  }
+  updateFood(food:Food):Observable<Food>{
+    return this.http.put<Food>(`${this.apiUrl}/${food.id}`, food);
+  }
+  deleteFood(foodId:number):Observable<void>{
+    return this.http.delete<void>(`${this.apiUrl}/${foodId}`);
+  }
+}
+ ---------------------------------------------------------------------------------------------------------------------------------
+2. food-list.html
+<h2>Food List</h2>
+<ul>
+    <li *ngFor="let food of foods">
+        {{food.name}} - {{food.description}}
+        <button (click)="editFood(food)">Edit</button>
+        <button (click)="deleteFood(food.id)">Delete</button>
+    </li>
+</ul>
+
+<h2>Add Food</h2>
+<form (ngSubmit)="addFood()">
+    <input type="text" [(ngModel)]="newFood.name" name="name" required />
+    <input type="text" [(ngModel)]="newFood.description" name="description" required />
+    <button type="submit">Add Food</button>
+</form>
+-------------------------------------------------------------------------------------------------------------------------------
+3 food-list.ts
+import { Component, OnInit } from '@angular/core';
+import { Food } from '../model/food.model';
+import { FoodService } from '../services/food.service';
+
+@Component({
+  selector: 'app-food-list',
+  templateUrl: './food-list.component.html',
+  styleUrls: ['./food-list.component.css']
+})
+export class FoodListComponent implements OnInit {
+
+  foods:Food[] = [];
+  selectedFood:Food | null = null;
+  newFood:Food = {id:0 , name:'' , description:''};
+
+  constructor(private foodService:FoodService) { }
+  
+
+  ngOnInit(): void {
+    this.loadFoods();
+  }
+
+  loadFoods():void{
+    this.foodService.getFoods().subscribe((data : Food[])=>{
+      this.foods = data;
+    })
+  }
+
+  addFood() :void{
+    if(this.newFood.id === 0 ){
+      this.foodService.addFood(this.newFood).subscribe(()=>{
+        this.loadFoods();
+        this.newFood = {id:0 , name:'' , description:''};
+      })
+    }
+    else{
+      this.foodService.updateFood(this.newFood).subscribe(()=>{
+        this.loadFoods();
+        this.newFood = {id:0 , name:'' , description:''};
+      })
+    }
+  }
+
+  editFood(food:Food):void{
+    this.selectedFood=food;
+    this.newFood = {...food};
+  }
+  updateFood():void{
+    if(this.newFood.id!==0){
+      this.foodService.updateFood(this.newFood).subscribe(()=>{
+        this.loadFoods();
+        this.newFood = {id:0 , name:'' , description:''};
+      })
+    }
+  }
+  deleteFood(id:number):void{
+    this.foodService.deleteFood(id).subscribe(()=>{
+      this.loadFoods();
+    })
+  }
+
+}
+----------------------------------------------------------------------------------------------------------------------
+4 food models ts
+export interface Food{
+    id:number;
+    name:string;
+    description:string;
+}
+------------------------------------------------------------------------------------------------------------------------------------------
+5 app-routing module ts
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
+import { FoodListComponent } from './food-list/food-list.component';
+
+const routes: Routes = [
+  {path:'',redirectTo:'full',pathMatch:'full'},
+  {path:'full' , component:FoodListComponent}
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+------------------------------------------------------------------------------------------------------------------------------------------\
+6 app component .html
+<router-outlet>
+    
+</router-outlet>
+-------------------------------------------------------
+7 app module ts 
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule } from '@angular/core';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { FoodListComponent } from './food-list/food-list.component';
+import {HttpClientModule} from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+@NgModule({
+  declarations: [
+    AppComponent,
+    FoodListComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
