@@ -1,0 +1,123 @@
+W5D1S2Q3
+
+import form module in app.comp.html
+
+add-employee.html
+<h2>Add Employee</h2>
+<form (ngSubmit)="addEmployee()">
+    <div>
+        <label for="name">Name:</label>
+        <input id="name" [(ngModel)]="name" name="name" required/>
+        <p *ngIf="!name">Name is required</p>
+    </div>
+    <div>
+        <label for="role">Role:</label>
+        <input id="role" [(ngModel)]="role" name="role" required/>
+        <p *ngIf="!name">Role is required</p>
+    </div>
+    <div>
+        <label for="location">Location:</label>
+        <input id="location" [(ngModel)]="location" name="location" required/>
+        <p *ngIf="!name">Location is required</p>
+    </div>
+</form>
+
+add-employee.ts
+import { Component, OnInit } from '@angular/core';
+import { EmployeeService } from '../services/employee.service';
+import { Employee } from '../model/employee';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-add-employee',
+  templateUrl: './add-employee.component.html',
+  styleUrls: ['./add-employee.component.css']
+})
+export class AddEmployeeComponent implements OnInit {
+
+
+  name:string = '';
+  role:string = '';
+  location: string = '';
+  constructor(private employeeService: EmployeeService, private router:Router) { }
+
+  addEmployee():void{
+    if(this.name && this.role && this.location){
+      const newEmployee:Employee = {
+        name:this.name,
+        role:this.role,
+        location:this.location
+      };
+      this.employeeService.addEmployee(newEmployee);
+      this.router.navigate(['/employee-list']);
+    }
+  }
+
+  ngOnInit(): void {
+  }
+
+}
+
+employee-list.html
+<h2>Employee List</h2>
+<div *ngIf="employees.length>0; else noEmployees">
+    <ul>
+        <li *ngFor="let employee of employees; let i = index">
+            {{employee.name}} - {{employee.role}} - {{employee.location}}
+            <button (click)="deleteEmployee(i)">Delete</button>
+        </li>
+    </ul>
+</div>
+<ng-template #noEmployees>
+    <p>No employees have been added.</p>
+</ng-template>
+
+employee-list.ts
+import { Component, OnInit } from '@angular/core';
+import { Employee } from '../model/employee';
+import { EmployeeService } from '../services/employee.service';
+
+@Component({
+  selector: 'app-employee-list',
+  templateUrl: './employee-list.component.html',
+  styleUrls: ['./employee-list.component.css']
+})
+export class EmployeeListComponent implements OnInit {
+
+
+  employees: Employee[]=[]
+  constructor(private employeeService: EmployeeService) { }
+
+  ngOnInit(): void {
+    this.employees = this.employeeService.getEmployees()
+  }
+
+  deleteEmployee(index:number):void{
+    this.employeeService.deleteEmployee(index);
+  }
+}
+
+
+services->employee.service.ts
+
+import { Injectable } from '@angular/core';
+import { Employee } from '../model/employee';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class EmployeeService {
+
+  private employees: Employee[]=[]
+  constructor() { }
+
+  getEmployees():Employee[]{
+    return this.employees;
+  }
+  addEmployee(employee:Employee):void{
+    this.employees.push(employee)
+  }
+  deleteEmployee(index:number):void{
+    this.employees.splice(index, 1);
+  }
+}
