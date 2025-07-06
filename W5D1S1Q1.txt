@@ -1,0 +1,65 @@
+W5D1S1Q1
+
+HTML
+
+<h1>Notes</h1>
+<form #noteForm="ngForm" (ngSubmit)="addNote()">
+    <input type="text" name="title" id="title" placeholder="Title" [(ngModel)]="newNoteTitle" />
+    <textarea name="body" id="body" cols="30" rows="10" placeholder="Body" [(ngModel)]="newNoteBody"></textarea>
+    <button type="submit">Add Note</button>
+
+</form>
+
+<ul class="note-List">
+    <li *ngFor="let note of notes$|async">
+        <h2>{{ note?.title }}</h2>
+        <p>{{ note?.body}}</p>
+
+    </li>
+</ul>
+
+TS
+
+import { Component, OnInit } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
+
+interface Note{
+  id:number;
+  title:string;
+  body:string;
+}
+
+@Component({
+  selector: 'app-note',
+  templateUrl: './note.component.html',
+  styleUrls: ['./note.component.css']
+})
+export class NoteComponent implements OnInit {
+
+  notes:Note[]=[];
+  private notesSubject=new BehaviorSubject<Note[]>([]);
+  notes$: Observable<Note[]> = this.notesSubject.asObservable();
+  newNoteTitle:string='';
+  newNoteBody:string='';
+
+  constructor() { }
+
+  ngOnInit(): void {
+    this.notesSubject.next(this.notes);
+  }
+
+  addNote():void{
+    if(!this.newNoteTitle.trim() || !this.newNoteBody.trim()) return;
+    const note:Note={
+      id: this.notes.length+1,
+      title: this.newNoteTitle,
+      body: this.newNoteBody,
+    }
+    this.notes=[...this.notes, note];
+    this.notes.push(...this.notes, note);
+    this.notesSubject.next(this.notes);
+    this.newNoteTitle='';
+ 
+  }
+
+}
