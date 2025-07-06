@@ -1,0 +1,253 @@
+S3Q3
+
+MODAL
+PRODUCT.MODAL.TS
+export interface Product{
+    id?:number;
+    name?:string;
+    category?:string;
+    price?:number;
+    description?:string
+  }
+
+
+SERVICES
+PRODUCT.SERVICES.TS
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Product } from '../model/product.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductService {
+  baseUrl: string="https://ide-faacbfbacddcce329935322eabcfecaeone.project.examly.io";
+  constructor(private http:HttpClient) {}
+    getAllProducts(): Observable<Product[]>{
+      return this.http.get<Product[]>(this.baseUrl);
+    }
+    addProduct(product: Product):Observable<void>{
+      return this.http.post<void>(this.baseUrl, product);
+    }
+    updateProduct(id:number, product:Product):Observable<void>{
+      return this.http.put<void>(`${this.baseUrl}/${id}`,product);
+    }
+    deleteProduct(id:number):Observable<void>{
+      return this.http.delete<void>(`${this.baseUrl}/${id}`);
+    }
+    getProductById(id:number):Observable<Product>{
+      return this.http.get<Product>(`${this.baseUrl}/${id}`);
+    }
+
+  
+}
+
+
+PRODUCT-LIST-TS
+import { Component, OnInit } from '@angular/core';
+import { ProductService } from '../services/product.service';
+import { Product } from '../model/product.model';
+
+@Component({
+  selector: 'app-product-list',
+  templateUrl: './product-list.component.html',
+  styleUrls: ['./product-list.component.css']
+})
+export class ProductListComponent implements OnInit {
+  products:Product[]=[];
+
+  constructor(private productServices:ProductService) { }
+
+  ngOnInit(): void {
+    this.productServices.getAllProducts().subscribe(value=>{
+      this.products=value;
+    })
+  }
+
+  deleteProduct(id:number):void{
+    this.productServices.deleteProduct(id).subscribe(()=>{
+      this.ngOnInit();
+    })
+  }
+
+}
+
+PRODUCT-LIST-HTML
+<ng-container *ngIf="products.length; else emptyList">
+    <h2>Product List</h2>
+    <ul>
+        <li *ngFor="let product of products"> 
+          {{product?.name}}-Category:{{product?.category}} | 
+          <a routerLink="['/products/view', product.id]">View</a> | 
+          <a routerLink="['/products/edit', product.id]">Edit</a> | 
+          <a (click)="deleteProduct(product.id)">Delete</a>
+        </li>
+    </ul>
+</ng-container>
+<ng-template #emptyList>
+    <p>No products available</p>
+</ng-template>
+<a [routerLink]="['/products/add']">Add Product</a>
+
+ADD-PRODUCT-TS
+
+import { Component, OnInit } from '@angular/core';
+import { ProductService } from '../services/product.service';
+import { Router } from '@angular/router';
+import { Product } from '../model/product.model';
+
+
+@Component({
+  selector: 'app-add-product',
+  templateUrl: './add-product.component.html',
+  styleUrls: ['./add-product.component.css']
+})
+export class AddProductComponent implements OnInit {
+
+  product:Product={
+    name:'',
+    description:'',
+    category:'',
+    price:0
+  }
+
+  constructor(private productService: ProductService,private router:Router) { }
+
+  ngOnInit(): void {
+  }
+
+  addProduct():void{
+    if(!this.product)return;
+    this.productService.addProduct(this.product).subscribe(()=>{
+      this.router.navigate(['/products']);
+    });
+  }
+
+}
+
+
+ADD-PRODUCT-HTML
+
+<h2>Add Product</h2>
+<form (ngSubmit)="addProduct()">
+    <div class="form-group">
+        <label for="name">Product Name</label>
+        <input type="text" name="name" id="name" [(ngModel)]="product.name">
+    </div>
+    <div class="form-group">
+        <label for="category">Product Category:</label>
+        <input type="text" name="category" id="category" [(ngModel)]="product.category">
+    </div>
+    <div class="form-group">
+        <label for="price">Product Price:</label>
+        <input type="number" name="price" id="price" [(ngModel)]="product.price">
+    </div>
+    <div class="form-group">
+        <label for="description">Product Description:</label>
+        <input type="text" name="description" id="description" [(ngModel)]="product.description">
+    </div>
+    <button type="submit">Add Product</button>
+</form>
+
+
+EDIT-PRODUCT-TS
+import { Component, OnInit } from '@angular/core';
+import { Product } from '../model/product.model';
+import { ProductService } from '../services/product.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
+@Component({
+  selector: 'app-edit-product',
+  templateUrl: './edit-product.component.html',
+  styleUrls: ['./edit-product.component.css']
+})
+export class EditProductComponent implements OnInit {
+  
+
+  product:Product={
+    name:'',
+    description:'',
+    category:'',
+    price:0
+  };
+  productId: number|null=null;
+
+  constructor(private productService:ProductService, private route:ActivatedRoute, private router:Router ) { }
+
+  ngOnInit(): void {
+    this.productId=+this.route.snapshot.params['id'];
+    this.productService.getProductById(this.productId).subscribe(value=>{
+      this.product=value;
+    })
+  }
+  updateProduct():void{
+    if(!this.product)return;
+    this.productService.updateProduct(this.productId, this.product).subscribe(()=>{
+      this.router.navigate(['/products']);
+    });
+  }
+
+
+}
+
+
+EDIT-PRODUCT-HTML
+<h2>Edit Product</h2>
+<form (ngSubmit)="updateProduct()">
+    <div class="form-group">
+        <label for="name">Product Name</label>
+        <input type="text" name="name" id="name" [(ngModel)]="product.name">
+    </div>
+    <div class="form-group">
+        <label for="category">Product Category:</label>
+        <input type="text" name="category" id="category" [(ngModel)]="product.category">
+    </div>
+    <div class="form-group">
+        <label for="price">Product Price:</label>
+        <input type="number" name="price" id="price" [(ngModel)]="product.price">
+    </div>
+    <div class="form-group">
+        <label for="description">Product Description:</label>
+        <input type="text" name="description" id="description" [(ngModel)]="product.description">
+    </div>
+    <button type="submit">Update Product</button>
+</form>
+
+
+VIEW-PRODUCT-TS
+import { Component, OnInit } from '@angular/core';
+import { ProductService } from '../services/product.service';
+import { ActivatedRoute } from '@angular/router';
+
+@Component({
+  selector: 'app-view-product',
+  templateUrl: './view-product.component.html',
+  styleUrls: ['./view-product.component.css']
+})
+export class ViewProductComponent implements OnInit {
+
+  productId:number|null=null;
+  product: import("/home/coder/project/workspace/angularapp/src/app/model/product.model").Product;
+  constructor(private productService:ProductService, private route:ActivatedRoute) { }
+
+  ngOnInit(): void {
+    this.productId=+this.route.snapshot.params['id'];
+    this.productService.getProductById(this.productId).subscribe(value=>{
+      this.product=value;
+    })
+  }
+
+}
+
+
+
+VIEW-PRODUCT-HTML
+<h2>View Product</h2>
+<ng-container *ngIf="product">
+    <p>ID: {{product?.id}}</p>
+    <p>Name:  {{product?.name}}</p>
+    <p>Category:  {{product?.category}}</p>
+    <p>Price:  {{product?.price}}</p>
+    <p>Description:  {{product?.description}}</p>
+</ng-container>
