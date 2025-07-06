@@ -1,0 +1,137 @@
+W5D1S2Q1
+
+add-fruit.html
+<h2>Add Fruit</h2>
+<form #fruitForm="ngForm" (ngSubmit)="addFruit()">
+    <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" [(ngModel)]="name" required/>
+    </div>
+    <div>
+        <label for="color">Color:</label>
+        <input type="text" id="color" name="color" [(ngModel)]="color" required/>
+    </div>
+    <div>
+        <label for="origin">Origin:</label>
+        <input type="text" id="origin" name="origin" [(ngModel)]="origin" required/>
+    </div>
+    <button type="submit">Add Fruit</button>
+
+</form>
+
+add-fruit.ts
+import { Component, OnInit } from '@angular/core';
+
+interface Fruit{
+  name:string;
+  color:string;
+  origin:string;
+}
+
+@Component({
+  selector: 'app-add-fruit',
+  templateUrl: './add-fruit.component.html',
+  styleUrls: ['./add-fruit.component.css']
+})
+export class AddFruitComponent implements OnInit {
+
+  name:string = '';
+  color:string = '';
+  origin:string = '';
+  fruits:Fruit[] = []
+  constructor() { }
+
+  ngOnInit(): void {
+  }
+
+  addFruit():void{
+    if(!this.name.trim() || !this.color.trim() || !this.origin.trim()) return;
+
+    const newFruit: Fruit = {
+      name:this.name,
+      color:this.color,
+      origin:this.origin
+    }
+    this.fruits.push(newFruit);
+    this.name = '';
+    this.color = '';
+    this.origin = '';
+  }
+
+}
+
+fruit-list.html
+<h2>Fruit List</h2>
+<div *ngIf="fruits.length>0; else noFruits">
+    <ul>
+        <li *ngFor="let fruit of fruits; let i = index">
+            <strong>{{fruit.name}}</strong> - {{fruit.color}}, {{fruit.origin}}
+            <button (click)="deleteFruit(i)">Delete</button>
+        </li>
+    </ul>
+</div>
+<ng-template #noFruits>
+    <p>No fruits added to the list.</p>
+</ng-template>
+
+fruit.list.ts
+import { Component, OnInit } from '@angular/core';
+import { FruitService } from '../services/fruit.service';
+
+interface Fruit{
+  name:string;
+  color:string;
+  origin: string;
+}
+
+@Component({
+  selector: 'app-fruit-list',
+  templateUrl: './fruit-list.component.html',
+  styleUrls: ['./fruit-list.component.css']
+})
+export class FruitListComponent implements OnInit {
+
+  fruits:Fruit[] = []
+
+  constructor(private fruitService:FruitService) { }
+
+  ngOnInit(): void {
+    this.fruits = this.fruitService.getFruits();
+  }
+  deleteFruit(index:number){
+    this.fruitService.deleteFruit(index);
+    this.fruits = this.fruitService.getFruits();
+  }
+
+}
+
+fruit.service.ts
+import { Injectable } from '@angular/core';
+
+export interface Fruit{
+  name:string,
+  color:string,
+  origin:string
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class FruitService {
+
+  fruits: any[] = []
+  constructor() {}
+
+  getFruits():any[]{
+    return this.fruits;
+  }
+
+  addFruit(fruit: any):void{
+    this.fruits.push(fruit);
+  }
+
+  deleteFruit(index:number):void{
+    this.fruits.splice(index, 1);
+  }
+}
+
